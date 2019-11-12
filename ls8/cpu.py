@@ -7,7 +7,14 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        self.pc = 0
+        self.reg = [0] * 8
+        self.ram = [0] * 256
+        self.commands = {
+            'LDI': 0b10000010,
+            'PRN': 0b01000111,
+            'HLT': 0b00000001
+        }
 
     def load(self):
         """Load a program into memory."""
@@ -60,6 +67,31 @@ class CPU:
 
         print()
 
+    def ram_read(self, address):
+        # return value stored in passed in address
+        return self.ram[address]
+
+    def ram_write(self, value, address):
+        # writes the given value into given address
+        self.ram[address] = value
+
     def run(self):
         """Run the CPU."""
-        pass
+        running = True
+        while running:
+            command = self.ram[self.pc]
+            operand_a = self.ram[self.pc + 1]
+            operand_b = self.ram[self.pc + 2]
+            if command == self.commands['LDI']:  # set register (operand_a) to value (operand_b)
+                self.reg[operand_a] = operand_b
+                self.pc += 3
+            elif command == self.commands['PRN']:  # print value of register (operand_a)
+                print(f'Value: {self.reg[operand_a]}')
+                self.pc += 2
+            elif command == self.commands['HLT']:  # stops running
+                running = False
+                self.pc += 1
+                print('Stopping...')
+            else:
+                running = False
+                print(f'Unknown command: {command}')
