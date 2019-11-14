@@ -1,4 +1,3 @@
-
 """CPU functionality."""
 
 import sys
@@ -12,36 +11,26 @@ class CPU:
         self.pc = 0
         self.reg = [0] * 8
         self.ram = [0] * 256
+        self.SP = 7
         self.commands = {
             'LDI': int("10000010", 2),
             'PRN': int("01000111", 2),
             'HLT': int("00000001", 2),
             'MUL': int("10100010", 2),
+            'PUSH': int("01000101", 2),
+            'POP': int("01000110", 2),
         }
         self.branchtable = {
             self.commands['LDI']: self.ldi,
             self.commands['PRN']: self.prn,
             self.commands['HLT']: self.hlt,
             self.commands['MUL']: self.mul,
+            self.commands['PUSH']: self.push,
+            self.commands['POP']: self.pop,
         }
 
     def load(self, filename):
         """Load a program into memory."""
-        # address = 0
-        # For now, we've just hardcoded a program:
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010, # LDI R0,8
-        #     0b00000000,
-        #     0b00001000,
-        #     0b01000111, # PRN R0
-        #     0b00000000,
-        #     0b00000001, # HLT
-        # ]
-
-        # for instruction in program:
-        #     self.ram[address] = instruction
-        #     address += 1
         try:
             address = 0
             with open(filename) as f:
@@ -118,6 +107,18 @@ class CPU:
         print('Stopping...')
         return False
 
+    def push(self, reg):
+        val = self.reg[reg]
+        self.reg[self.SP] -= 1
+        self.ram[self.reg[self.SP]] = val
+        self.pc += 2
+
+    def pop(self, reg):
+        val = self.ram[self.reg[self.SP]]
+        self.reg[reg] = val
+        self.reg[self.SP] += 1
+        self.pc += 2
+
     def run(self):
         """Run the CPU."""
         running = True
@@ -126,7 +127,6 @@ class CPU:
             num_params = int(bin(command >> 6).replace("0b", ""), 2)
             operand_a = self.ram[self.pc + 1]
             operand_b = self.ram[self.pc + 2]
-            # print(f'command: {command}, operand_a: {operand_a}, operand_b: {operand_b}')
             if num_params == 2:
                 self.branchtable[command](operand_a, operand_b)
             elif num_params == 1:
